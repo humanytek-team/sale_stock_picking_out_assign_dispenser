@@ -56,7 +56,8 @@ class StockPicking(models.Model):
                             dispenser.stock_picking_ids.filtered(
                                 lambda p: p.picking_type_id.id ==
                                 picking_type_delivery_order.id and
-                                p.state != 'done')
+                                (p.state == 'partially_available' or
+                                p.state == 'assigned'))
 
                         if not dispenser.stock_picking_ids or \
                                 not dispenser_assigned:
