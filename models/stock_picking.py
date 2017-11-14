@@ -31,43 +31,56 @@ class StockPicking(models.Model):
     @api.model
     def create(self, vals):
 
-        create_result = super(StockPicking, self).create(vals)
-        picking_type_delivery_order = self.env.ref('stock.picking_type_out')
+        new_picking = super(StockPicking, self).create(vals)
 
-        if picking_type_delivery_order:
-            if vals.get('origin') and \
-                    vals.get('picking_type_id') == \
-                    picking_type_delivery_order.id:
+        if new_picking.picking_type_code == 'outgoing':
+
+            if new_picking.origin:
 
                 SaleOrder = self.env['sale.order']
                 generated_from_sale_order = SaleOrder.search([
                     ('name', '=', vals.get('origin'))])
 
                 if generated_from_sale_order:
-                    ResUsers = self.env['res.users']
-                    group_stock_user = self.env.ref('stock.group_stock_user')
-                    dispensers = ResUsers.search([
-                        ('groups_id', 'in', group_stock_user.id),
-                        ])
 
-                    dispensers_without_assign = list()
-                    for dispenser in dispensers:
-                        dispenser_assigned = \
-                            dispenser.stock_picking_ids.filtered(
-                                lambda p: p.picking_type_id.id ==
-                                picking_type_delivery_order.id and
-                                (p.state == 'partially_available' or
-                                p.state == 'assigned'))
+                    StockDispenser = self.env['stock.dispenser']
+                    dispensers = StockDispenser.search([])
+                    dispensers_activated_and_free = dispensers.filtered(
+                        lambda dispenser: dispenser.active_and_free
+                    )
 
-                        if not dispenser.stock_picking_ids or \
-                                not dispenser_assigned:
+                    if dispensers_activated_and_free:
 
-                            dispensers_without_assign.append(dispenser.id)
+                        dispenser_chosen = random.choice(
+                            dispensers_activated_and_free)
+                        new_picking.write(
+                            {'dispenser_user_id': dispenser_chosen.id})
+                        dispenser_chosen.active_and_free = False
 
-                    if dispensers_without_assign:
-                        dispenser_id_chosen = random.choice(
-                            dispensers_without_assign)
-                        create_result.write(
-                            {'dispenser_user_id': dispenser_id_chosen})
+                    else:
 
-        return create_result
+                        dispensers_without_assign = list()
+
+                        for dispenser in dispensers:
+
+                            dispenser_assigned = \
+                                dispenser.stock_picking_ids.filtered(
+                                    lambda p: p.picking_type_code ==
+                                    'outgoing' and
+                                    (p.state == 'partially_available' or
+                                    p.state == 'assigned')
+                                    )
+
+                            if not dispenser.stock_picking_ids or \
+                                    not dispenser_assigned:
+
+                                dispensers_without_assign.append(dispenser.id)
+
+                        if dispensers_without_assign:
+
+                            dispenser_id_chosen = random.choice(
+                                dispensers_without_assign)
+                            new_picking.write(
+                                {'dispenser_user_id': dispenser_id_chosen})
+
+        return new_picking
