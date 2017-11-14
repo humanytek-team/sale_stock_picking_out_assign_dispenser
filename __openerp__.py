@@ -29,7 +29,7 @@
     'author': "Humanytek",
     'website': "http://www.humanytek.com",
     'category': 'Stock',
-    'version': '1.0.1',
+    'version': '1.1.0',
     'depends': ['sale_stock', 'stock_dispenser', ],
     'data': [
     ],
