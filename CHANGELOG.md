@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2017-11-14
+### changed
+- Changes priority in assignation of dispensers to delivery orders of sale orders to includes dispensers recently activated.
 
 ## [1.0.1] - 2017-08-31
 ### changed
